@@ -6,6 +6,14 @@ unless source_data_csv
   puts 'Usage: generate_schedule source_data.csv'
   exit
 end
+
+def schedule_time_block time_block_data
+  # I want an array for each mentor with 9 slots (number of time slots I've decided are in a time block) - this is the mentor's schedule
+  # I want an array for each company for each time block, with 9 slots - the company's schedule
+
+  puts time_block_data
+
+end
 MENTOR = 0
 DAY = 1
 AMPM = 2
@@ -32,4 +40,10 @@ CSV.foreach(source_data_csv, headers: true) do |row|
   end
 
   data_by_time_block[day][ampm][row[MENTOR]] = [row[COMPANY_1], row[COMPANY_2], row[COMPANY_3], row[COMPANY_4], row[COMPANY_5], row[COMPANY_6]]
+end
+
+data_by_time_block.each do |day|
+  day.each do |time_block|
+    schedule_time_block(time_block)
+  end
 end
