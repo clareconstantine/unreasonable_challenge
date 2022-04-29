@@ -20,6 +20,8 @@ COMPANY_6 = 8
 
 NO_OPEN_TIME = -1
 
+UNDEFINED = "Undefined".freeze
+
 def find_time_slot mentor_schedule, fellow_schedule
   time_slot = 0
 
@@ -52,7 +54,10 @@ def schedule_time_block time_block_data
     end
 
     fellow_list.each do |fellow|
-      # if that mentor has nothing scheduled yet for this time block, make an empty array for their schedule
+      # don't try and schedule a meeting unless there is actually a fellow (some mentors don't have the max number of meetings)
+      next if !fellow
+
+      # if that fellow has nothing scheduled yet for this time block, make an empty array for their schedule
       if !fellow_schedules[fellow]
         # puts "setting empty schedule for #{fellow}"
         fellow_schedules[fellow] = [nil, nil, nil, nil, nil, nil, nil, nil, nil]
@@ -80,8 +85,11 @@ end
 data_by_time_block = {}
 
 CSV.foreach(source_data_csv, headers: true) do |row|
-  # if we haven't seen this day yet, add it
   day = row[DAY]
+  # skip scheduling mentors who have not confirmed their time block
+  next if day == UNDEFINED || ampm == UNDEFINED
+
+  # if we haven't seen this day yet, add it
   if !data_by_time_block[day]
     data_by_time_block[day] = {}
   end
