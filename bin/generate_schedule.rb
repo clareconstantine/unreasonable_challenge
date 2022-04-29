@@ -76,36 +76,45 @@ def schedule_time_block time_block_data
       end
     end
   end
-  # puts mentor_schedules
-  # puts fellow_schedules
+
+  {
+    mentor_schedules: mentor_schedules,
+    fellow_schedules: fellow_schedules
+  }
 end
 
 
 
 data_by_time_block = {}
+final_schedules = {}
 
 CSV.foreach(source_data_csv, headers: true) do |row|
   day = row[DAY]
+  ampm = row[AMPM]
+
   # skip scheduling mentors who have not confirmed their time block
   next if day == UNDEFINED || ampm == UNDEFINED
 
   # if we haven't seen this day yet, add it
   if !data_by_time_block[day]
     data_by_time_block[day] = {}
+    final_schedules[day] = {}
   end
 
   # if we haven't seen this ampm value for this day yet, add it
-  ampm = row[AMPM]
   if !data_by_time_block[day][ampm]
     data_by_time_block[day][ampm] = {}
+    final_schedules[day][ampm] = {}
   end
 
   data_by_time_block[day][ampm][row[MENTOR]] = [row[COMPANY_1], row[COMPANY_2], row[COMPANY_3], row[COMPANY_4], row[COMPANY_5], row[COMPANY_6]]
 end
 
 # puts data_by_time_block
-data_by_time_block.each_value do |ampm|
+data_by_time_block.each do |day, ampm|
   ampm.each_value do |time_block_data|
-    schedule_time_block(time_block_data)
+    final_schedules[day][ampm] = schedule_time_block(time_block_data)
   end
 end
+
+puts final_schedules
