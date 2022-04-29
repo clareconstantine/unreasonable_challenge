@@ -42,8 +42,9 @@ CSV.foreach(source_data_csv, headers: true) do |row|
   data_by_time_block[day][ampm][row[MENTOR]] = [row[COMPANY_1], row[COMPANY_2], row[COMPANY_3], row[COMPANY_4], row[COMPANY_5], row[COMPANY_6]]
 end
 
-data_by_time_block.each do |day|
-  day.each do |time_block|
-    schedule_time_block(time_block)
+# puts data_by_time_block
+data_by_time_block.each_value do |ampm|
+  ampm.each_value do |time_block_data|
+    schedule_time_block(time_block_data)
   end
 end
