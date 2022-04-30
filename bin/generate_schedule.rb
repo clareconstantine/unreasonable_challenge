@@ -25,6 +25,9 @@ NO_OPEN_TIME = -1
 
 UNDEFINED = "Undefined".freeze
 
+# number of time slots for meetings in a time block
+NUM_TIME_SLOTS = 9
+
 
 # ======================== HELPER METHODS ====================================
 
@@ -58,7 +61,7 @@ def schedule_from_mentor_list mentor_list, time_block_data
     # slot, and we will eventually fill in the names of the fellows they will be
     # meeting with in the time slots when they have meetings scheduled.
     if !mentor_schedules[mentor]
-      mentor_schedules[mentor] = [nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      mentor_schedules[mentor] = Array.new(NUM_TIME_SLOTS) {|i| nil}
     end
 
     # get the list of fellows that mentor is going to meet with
@@ -76,7 +79,7 @@ def schedule_from_mentor_list mentor_list, time_block_data
       # slot, and we will eventually fill in the names of the fellows they will be
       # meeting with in the time slots when they have meetings scheduled.
       if !fellow_schedules[fellow]
-        fellow_schedules[fellow] = [nil, nil, nil, nil, nil, nil, nil, nil, nil]
+        fellow_schedules[fellow] = Array.new(NUM_TIME_SLOTS) {|i| nil}
       end
 
       # pass in the mentor and fellow's schedules to find the first mutually available time
