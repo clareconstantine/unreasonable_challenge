@@ -7,6 +7,9 @@ unless source_data_csv
   exit
 end
 
+
+# ======================== CONSTANTS =========================================
+
 # constants to make it easier to pull data out of a row of the CSV
 MENTOR = 0
 DAY = 1
@@ -22,6 +25,13 @@ NO_OPEN_TIME = -1
 
 UNDEFINED = "Undefined".freeze
 
+
+# ======================== HELPER METHODS ====================================
+
+# params: arrays representing a mentor's schedule and a fellow's schedule
+# returns the first index that is empty in both arrays, representing the
+# available meeting slot that works for both parties. Returns NO_OPEN_TIME
+# if there was not a mutually available time
 def find_time_slot mentor_schedule, fellow_schedule
   time_slot = 0
 
@@ -43,11 +53,12 @@ def schedule_from_mentor_list mentor_list, time_block_data
   fellow_schedules = {}
 
   mentor_list.each do |mentor|
-    # if that mentor has nothing scheduled yet for this time block, make an empty array for their schedule
+    # if this mentor has no schedule yet for this time block, make an empty
+    # array to represent their schedule - each space in the array represents a time
+    # slot, and we will eventually fill in the names of the fellows they will be
+    # meeting with in the time slots when they have meetings scheduled.
     if !mentor_schedules[mentor]
-      # puts "setting empty schedule for #{mentor}"
       mentor_schedules[mentor] = [nil, nil, nil, nil, nil, nil, nil, nil, nil]
-      # "#{mentor}'s schedule: #{mentor_schedules[mentor]}"
     end
 
     # get the list of fellows that mentor is going to meet with
@@ -55,40 +66,43 @@ def schedule_from_mentor_list mentor_list, time_block_data
 
     # schedule the meeting between the mentor and each fellow in their list
     fellow_list.each do |fellow|
-      # don't try and schedule a meeting unless there is actually a fellow (some mentors don't have the max number of meetings)
+      # don't try and schedule a meeting unless this fellow exists (some mentors
+      # don't have the max number of meetings, so there can be nil entries in
+      # the fellow_list
       next if !fellow
 
-      # if that fellow has nothing scheduled yet for this time block, make an empty array for their schedule
+      # if this fellow has no schedule yet for this time block, make an empty
+      # array to represent their schedule - each space in the array represents a time
+      # slot, and we will eventually fill in the names of the fellows they will be
+      # meeting with in the time slots when they have meetings scheduled.
       if !fellow_schedules[fellow]
-        # puts "setting empty schedule for #{fellow}"
         fellow_schedules[fellow] = [nil, nil, nil, nil, nil, nil, nil, nil, nil]
-        # "#{fellow}'s schedule: #{fellow_schedules[fellow]}"
       end
 
-      # pass in the current schedules to find the first mutually available time
+      # pass in the mentor and fellow's schedules to find the first mutually available time
       time_slot = find_time_slot mentor_schedules[mentor], fellow_schedules[fellow]
 
-      # if we found a time that works, add the mentor and fellow to each other's schedules
-      if time_slot != NO_OPEN_TIME
+      if time_slot == NO_OPEN_TIME
+        # if we didn't find a time that works, return this value to communicate that
+        return NO_OPEN_TIME
+      else
+        # we found a time that works, add the mentor and fellow to each other's schedules
         mentor_schedules[mentor][time_slot] = fellow
         fellow_schedules[fellow][time_slot] = mentor
-      else
-        # if there was no open time
-        return NO_OPEN_TIME
       end
     end
   end
 
+  # we found a schedule that works, so return it
   {
-    mentor_schedules: mentor_schedules,
-    fellow_schedules: fellow_schedules
+    "mentor_schedules" => mentor_schedules,
+    "fellow_schedules"=> fellow_schedules
   }
 end
 
+# params: the mentor and fellow meeting data (to be scheduled) for a specifc time block
+# returns an object containing the mentor and fellow's schedules
 def schedule_time_block time_block_data
-  # I want an array for each mentor with 9 slots (number of time slots I've decided are in a time block) - this is the mentor's schedule
-  # I want an array for each company for each time block, with 9 slots - the company's schedule
-
   # create a list of mentors, so we can schedule them in a different order if we don't get a viable schedule
   mentor_list = time_block_data.keys
 
@@ -97,9 +111,29 @@ end
 
 
 
+# ======================== MAIN ====================================
+
+
+# we are going to group the CSV data by time block (ex: Monday AM) her
 data_by_time_block = {}
+
+# we will store the final schedules here
 final_schedules = {}
 
+# Iterate through the CSV, adding the data to data_by_time_block in the shape
+# {"Monday":
+#   {
+#   "AM":
+#     {"Ada Wong": ["Vyv", "ZolaSea"],
+#       ...
+#     }
+#   "PM": {"Ada Wong": ["Vyv", "ZolaSea"],
+#       ...
+#     }
+#   },
+# "Tuesday":
+#   ...
+# }
 CSV.foreach(source_data_csv, headers: true) do |row|
   day = row[DAY]
   ampm = row[AMPM]
@@ -125,8 +159,7 @@ end
 data_by_time_block.each do |day, ampm|
   ampm.each do |ampm, time_block_data|
     schedules = schedule_time_block(time_block_data)
-    final_schedules[day][ampm]["mentor_schedules"] = schedules[:mentor_schedules]
-    final_schedules[day][ampm]["fellow_schedules"] = schedules[:fellow_schedules]
+    final_schedules[day][ampm] = schedules
   end
 end
 
