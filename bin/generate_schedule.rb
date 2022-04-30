@@ -37,15 +37,12 @@ def find_time_slot mentor_schedule, fellow_schedule
   NO_OPEN_TIME
 end
 
-
-def schedule_time_block time_block_data
-  # I want an array for each mentor with 9 slots (number of time slots I've decided are in a time block) - this is the mentor's schedule
-  # I want an array for each company for each time block, with 9 slots - the company's schedule
-  # puts time_block_data
+def schedule_from_mentor_list mentor_list, time_block_data
+  # where we will store schedules for mentors and fellows
   mentor_schedules = {}
   fellow_schedules = {}
 
-  time_block_data.each do |mentor, fellow_list|
+  mentor_list.each do |mentor|
     # if that mentor has nothing scheduled yet for this time block, make an empty array for their schedule
     if !mentor_schedules[mentor]
       # puts "setting empty schedule for #{mentor}"
@@ -53,6 +50,10 @@ def schedule_time_block time_block_data
       # "#{mentor}'s schedule: #{mentor_schedules[mentor]}"
     end
 
+    # get the list of fellows that mentor is going to meet with
+    fellow_list = time_block_data[mentor]
+
+    # schedule the meeting between the mentor and each fellow in their list
     fellow_list.each do |fellow|
       # don't try and schedule a meeting unless there is actually a fellow (some mentors don't have the max number of meetings)
       next if !fellow
@@ -71,8 +72,9 @@ def schedule_time_block time_block_data
       if time_slot != NO_OPEN_TIME
         mentor_schedules[mentor][time_slot] = fellow
         fellow_schedules[fellow][time_slot] = mentor
-        # TODO: handle this case
+      else
         # if there was no open time
+        return NO_OPEN_TIME
       end
     end
   end
@@ -81,6 +83,16 @@ def schedule_time_block time_block_data
     mentor_schedules: mentor_schedules,
     fellow_schedules: fellow_schedules
   }
+end
+
+def schedule_time_block time_block_data
+  # I want an array for each mentor with 9 slots (number of time slots I've decided are in a time block) - this is the mentor's schedule
+  # I want an array for each company for each time block, with 9 slots - the company's schedule
+
+  # create a list of mentors, so we can schedule them in a different order if we don't get a viable schedule
+  mentor_list = time_block_data.keys
+
+  schedule_from_mentor_list mentor_list, time_block_data
 end
 
 
@@ -110,10 +122,11 @@ CSV.foreach(source_data_csv, headers: true) do |row|
   data_by_time_block[day][ampm][row[MENTOR]] = [row[COMPANY_1], row[COMPANY_2], row[COMPANY_3], row[COMPANY_4], row[COMPANY_5], row[COMPANY_6]]
 end
 
-# puts data_by_time_block
 data_by_time_block.each do |day, ampm|
-  ampm.each_value do |time_block_data|
-    final_schedules[day][ampm] = schedule_time_block(time_block_data)
+  ampm.each do |ampm, time_block_data|
+    schedules = schedule_time_block(time_block_data)
+    final_schedules[day][ampm]["mentor_schedules"] = schedules[:mentor_schedules]
+    final_schedules[day][ampm]["fellow_schedules"] = schedules[:fellow_schedules]
   end
 end
 
