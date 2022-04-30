@@ -26,6 +26,8 @@ NO_OPEN_TIME = -1
 UNDEFINED = "Undefined".freeze
 
 # number of time slots for meetings in a time block
+# we could also take a parameter for the number of time slots in a time block
+# if that varies between programs
 NUM_TIME_SLOTS = 9
 
 
@@ -50,6 +52,10 @@ def find_time_slot mentor_schedule, fellow_schedule
   NO_OPEN_TIME
 end
 
+# params: an array of mentor names in the order that we want to schedule their meetings,
+# and the mentor and fellow meeting data (to be scheduled) for a specific time block
+# returns an object containing the mentor and fellow's schedules for the time block, or
+# NO_OPEN_TIME if there wasn't a viable schedule
 def schedule_from_mentor_list mentor_list, time_block_data
   # where we will store schedules for mentors and fellows
   mentor_schedules = {}
@@ -103,14 +109,24 @@ def schedule_from_mentor_list mentor_list, time_block_data
   }
 end
 
-# params: the mentor and fellow meeting data (to be scheduled) for a specifc time block
-# returns an object containing the mentor and fellow's schedules
+# params: the mentor and fellow meeting data (to be scheduled) for a specific time block
+# returns an object containing the mentor and fellow's schedules for the time block
 def schedule_time_block time_block_data
   # create a list of mentors, so we can schedule them in a different order if we don't get a viable schedule
   mentor_list = time_block_data.keys
 
+  # I ran out of time, but my plan here was to sort the mentor list in decreasing order
+  # of how many meetings they have during this time block, so that we always schedule the
+  # busiest mentor's meetings first. If we couldn't create a compatible schedule, then
+  # rotate this array and try again, until we've tried each of the starting points. Could
+  # also think about shuffling randomly a few times after trying all of the roations if we
+  # still don't have a working schedule. I also need to fully finish handling the NO_OPEN_TIME
+  # value if we didn't find a valid schedule.
+  # Could also add more time slots.
+
   schedule_from_mentor_list mentor_list, time_block_data
 end
+
 
 
 
